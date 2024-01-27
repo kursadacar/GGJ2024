@@ -5,9 +5,22 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CapsuleCollider2D))]
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(MainCharacterArmController))]
 public class MainCharacterController : MonoBehaviour
 {
-    public static MainCharacterController Instance { get; private set; }
+    private static MainCharacterController _instance;
+    public static MainCharacterController Instance
+    {
+        get
+        {
+            if(_instance == null)
+            {
+                _instance = FindObjectOfType<MainCharacterController>();
+            }
+
+            return _instance;
+        }
+    }
 
     #region DEBUG FIELDS
     [SerializeField]
@@ -37,24 +50,23 @@ public class MainCharacterController : MonoBehaviour
     private Rigidbody2D _rigidBody;
     private CapsuleCollider2D _capsuleCollider;
     private Animator _animator;
+    private MainCharacterArmController _armController;
+    private CharacterMouthController _mouthController;
+    private Character _character;
 
     private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
         _capsuleCollider = GetComponent<CapsuleCollider2D>();
         _animator = GetComponent<Animator>();
-
-        if(Instance != null)
-        {
-            Destroy(Instance);
-        }
-
-        Instance = this;
+        _armController = GetComponent<MainCharacterArmController>();
+        _mouthController = GetComponent<CharacterMouthController>();
+        _character = GetComponentInParent<Character>() ?? GetComponent<Character>();
     }
 
     void Start()
     {
-
+        _character.MouthController.StartExpression(CharacterMouthController.ExpressionType.TalkUpset);
     }
 
     void Update()
