@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
@@ -14,38 +15,66 @@ public class CameraController : MonoBehaviour
     private float _cameraDistance;
 
     [SerializeField]
-    private float _borderPercentage;
+    private float _cameraHeightOffset;
 
-    private Vector3? _cameraTargetPosition;
+    [SerializeField]
+    private float _borderPercentage;
 
     void Start()
     {
         _camera = GetComponent<Camera>();
 
-        SetCameraPosition(GetTargetCameraPosition());
+        Vector3 targetPosition = _camera.transform.position;
+        CalculateCameraTargetPosition(1f, ref targetPosition);
+        _camera.transform.position = targetPosition;
     }
 
     void Update()
     {
         float dt = Time.deltaTime;
 
+        Vector3 targetPosition = _camera.transform.position;
+
+        CalculateCameraTargetPosition(dt, ref targetPosition);
+        _camera.transform.position = targetPosition;
+        //TickCameraMovement(targetPosition, dt);
+    }
+
+    private void CalculateCameraTargetPosition(float dt, ref Vector3 targetPosition)
+    {
+        targetPosition = _camera.transform.position;
+
+        CalculateHorizontalTargetPosition(dt, ref targetPosition);
+        CalculateVerticalTargetPosition(dt, ref targetPosition);
+        CalculateDistance(dt, ref targetPosition);
+    }
+
+    private void CalculateHorizontalTargetPosition(float dt, ref Vector3 targetPosition)
+    {
         var screenPoint = _camera.WorldToViewportPoint(_mainCharacter.transform.position);
         if (IsCloseToScreenBorder(screenPoint, _borderPercentage))
         {
-            _cameraTargetPosition = GetTargetCameraPosition();
-        }
+            var distance = _mainCharacter.transform.position.x - _camera.transform.position.x;
+            float distanceSign = distance < 0 ? -1f : 1f;
+            distance = Mathf.Abs(distance);
 
-        if (_cameraTargetPosition != null)
-        {
-            if (Vector3.Distance(_camera.transform.position, _cameraTargetPosition.Value) < float.Epsilon)
-            {
-                _cameraTargetPosition = null;
-            }
-            else
-            {
-                TickCameraMovement(_cameraTargetPosition.Value, dt);
-            }
+            var followSpeed = _mainCharacter.GetComponent<MainCharacterController>().GetMovementSpeed();
+            followSpeed = Mathf.Abs(followSpeed);
+
+            var followDistance = Mathf.Min(followSpeed * dt, distance);
+
+            targetPosition.x = _camera.transform.position.x + followDistance * distanceSign;
         }
+    }
+
+    private void CalculateVerticalTargetPosition(float dt, ref Vector3 targetPosition)
+    {
+        targetPosition.y = _mainCharacter.transform.position.y + _cameraHeightOffset;
+    }
+
+    private void CalculateDistance(float dt, ref Vector3 targetPosition)
+    {
+        targetPosition.z = -_cameraDistance;
     }
 
     private bool IsCloseToScreenBorder(Vector2 screenPoint, float borderPercentage)
@@ -56,20 +85,14 @@ public class CameraController : MonoBehaviour
 
         var leftBorder = camRect.min.x + (camRect.width * borderRatio);
         var rightBorder = camRect.max.x - (camRect.width * borderRatio);
-        var topBorder = camRect.min.y + (camRect.height * borderRatio);
-        var bottomBorder = camRect.max.y - (camRect.height * borderRatio);
 
-        if (screenPixel.x < leftBorder || screenPixel.x > rightBorder || screenPixel.y < topBorder || screenPixel.y > bottomBorder)
+        if (screenPixel.x < leftBorder
+            || screenPixel.x > rightBorder)
         {
             return true;
         }
 
         return false;
-    }
-
-    private Vector3 GetTargetCameraPosition()
-    {
-        return _mainCharacter.transform.position + (Vector3.forward * _cameraDistance * -1f);
     }
 
     private void TickCameraMovement(Vector3 targetPosition, float dt)
@@ -78,11 +101,6 @@ public class CameraController : MonoBehaviour
         var followSpeed = _mainCharacter.GetComponent<MainCharacterController>().GetMovementSpeed();
         var followDistance = Mathf.Min(followSpeed * dt, direction.magnitude);
 
-        SetCameraPosition(_camera.transform.position + (direction.normalized * followDistance));
-    }
-
-    private void SetCameraPosition(Vector3 targetPosition)
-    {
-        _camera.transform.position = targetPosition;
+        _camera.transform.position += direction.normalized * followDistance;
     }
 }
