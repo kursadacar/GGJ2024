@@ -2,13 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(CapsuleCollider2D))]
+[RequireComponent(typeof(Animator))]
 public class MainCharacterController : MonoBehaviour
 {
+    public static MainCharacterController Instance { get; private set; }
+
     #region DEBUG FIELDS
     [SerializeField]
     private bool _isGrounded;
     [SerializeField]
-    private float _raycastHitDistance;
+    private float _groundDistance;
+    [SerializeField]
+    private float _verticalVelocity;
 
     #endregion
 
@@ -16,7 +23,7 @@ public class MainCharacterController : MonoBehaviour
     private float _movementSpeed;
 
     [SerializeField]
-    private float _jumpForce;
+    private float _maxJumpHeight;
 
     [SerializeField]
     private KeyCode[] _moveLeftKeys;
@@ -29,23 +36,45 @@ public class MainCharacterController : MonoBehaviour
 
     private Rigidbody2D _rigidBody;
     private CapsuleCollider2D _capsuleCollider;
+    private Animator _animator;
 
-    //[SerializeField]
-    //private float _verticalVelocity;
-
-    void Start()
+    private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
         _capsuleCollider = GetComponent<CapsuleCollider2D>();
+        _animator = GetComponent<Animator>();
+
+        if(Instance != null)
+        {
+            Destroy(Instance);
+        }
+
+        Instance = this;
+    }
+
+    void Start()
+    {
+
     }
 
     void Update()
     {
-        float verticalVelocity = transform.position.y - _lastPosition.y;
-        //_verticalVelocity = verticalVelocity;//TODO: remove
-        HandleInput(verticalVelocity);
+        _groundDistance = CalculateGroundDistance();
+
+        HandleInput();
+
+        _verticalVelocity = (transform.position.y - _lastPosition.y) * (1f / Time.deltaTime);
+        _animator.SetVerticalVelocity(Mathf.Abs(_verticalVelocity));
 
         _lastPosition = transform.position;
+    }
+
+    private void LateUpdate()
+    {
+        if (!_isGrounded)
+        {
+            _animator.SetHorizontalVelocity(0f);
+        }
     }
 
     public float GetMovementSpeed()
@@ -53,7 +82,17 @@ public class MainCharacterController : MonoBehaviour
         return _movementSpeed;
     }
 
-    private void HandleInput(float verticalVelocity)
+    public float GetGroundDistance()
+    {
+        return _groundDistance;
+    }
+
+    public bool GetIsGrounded()
+    {
+        return _groundDistance < 0.01f;
+    }
+
+    private void HandleInput()
     {
         float movementAmount = 0f;
 
@@ -72,37 +111,47 @@ public class MainCharacterController : MonoBehaviour
 
         transform.position = position;
 
-        _isGrounded = IsCharacterGrounded();
+        _isGrounded = GetIsGrounded();
         if (IsKeyPressed(_jumpKeys) && _isGrounded)
         {
             //Debug.Log("jump");
-            _rigidBody.AddForce(Vector2.up * _jumpForce);
+            //vMax = v(y^2) / 2g
+
+            float initialSpeed = Mathf.Sqrt(_maxJumpHeight * Physics.gravity.magnitude * 2f);
+
+            var velocity = _rigidBody.velocity;
+            velocity.y = +initialSpeed;
+            _rigidBody.velocity = velocity;
         }
     }
 
-    private bool IsCharacterGrounded()
+    private float CalculateGroundDistance()
     {
-        var rayOrigin = transform.position + (Vector3.up * _capsuleCollider.size.y * 0.5f * -1f) + Vector3.up * 0.1f;
-
-        var characterLayerMask = LayerMask.GetMask("Character");
-
-        var contactFiler = new ContactFilter2D()
+        if(_capsuleCollider == null)
         {
-            minNormalAngle = 0f,
-            maxNormalAngle = 150f,
-            useNormalAngle = true,
-            layerMask = characterLayerMask,
-            useLayerMask = true,
-        };
-
-        var raycastResult = Physics2D.Raycast(rayOrigin, Vector3.up * -1f, 0.11f, ~characterLayerMask);
-        if (raycastResult)
-        {
-            _raycastHitDistance = Vector2.Distance(raycastResult.point, transform.position);
-            return _raycastHitDistance < (_capsuleCollider.size.y + 0.01f);
+            return 0f;
         }
 
-        return false;
+        var rayOrigin = transform.position + (Vector3.up * _capsuleCollider.size.y * 0.5f * -1f) + Vector3.up * 0.1f;
+        var characterLayerMask = LayerMask.GetMask("Character");
+
+        //var contactFilter = new ContactFilter2D()
+        //{
+        //    minNormalAngle = 0f,
+        //    maxNormalAngle = 150f,
+        //    useNormalAngle = true,
+        //    layerMask = characterLayerMask,
+        //    useLayerMask = true,
+        //};
+
+        var raycastResult = Physics2D.Raycast(rayOrigin, Vector3.up * -1f, 10000f, ~characterLayerMask);
+        if (raycastResult)
+        {
+            _groundDistance = Vector2.Distance(raycastResult.point, transform.position) - (_capsuleCollider.size.y / 2f);
+            return _groundDistance;
+        }
+
+        return 0f;
     }
 
     private bool IsKeyPressed(KeyCode[] codes)

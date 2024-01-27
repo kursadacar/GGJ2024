@@ -7,18 +7,19 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     private Camera _camera;
-
-    [SerializeField]
-    private Transform _mainCharacter;
-
-    [SerializeField]
-    private float _cameraDistance;
+    private float _defaultCameraSize;
 
     [SerializeField]
     private float _cameraHeightOffset;
 
     [SerializeField]
     private float _borderPercentage;
+
+    [SerializeField]
+    private float _groundDistanceMultiplier;
+
+    [SerializeField]
+    private Vector2 _cameraSizeLimit;
 
     void Start()
     {
@@ -27,6 +28,8 @@ public class CameraController : MonoBehaviour
         Vector3 targetPosition = _camera.transform.position;
         CalculateCameraTargetPosition(1f, ref targetPosition);
         _camera.transform.position = targetPosition;
+
+        _defaultCameraSize = _camera.orthographicSize;
     }
 
     void Update()
@@ -46,19 +49,19 @@ public class CameraController : MonoBehaviour
 
         CalculateHorizontalTargetPosition(dt, ref targetPosition);
         CalculateVerticalTargetPosition(dt, ref targetPosition);
-        CalculateDistance(dt, ref targetPosition);
+        CalculateTargetSize(dt, ref targetPosition);
     }
 
     private void CalculateHorizontalTargetPosition(float dt, ref Vector3 targetPosition)
     {
-        var screenPoint = _camera.WorldToViewportPoint(_mainCharacter.transform.position);
+        var screenPoint = _camera.WorldToViewportPoint(MainCharacterController.Instance.transform.position);
         if (IsCloseToScreenBorder(screenPoint, _borderPercentage))
         {
-            var distance = _mainCharacter.transform.position.x - _camera.transform.position.x;
+            var distance = MainCharacterController.Instance.transform.position.x - _camera.transform.position.x;
             float distanceSign = distance < 0 ? -1f : 1f;
             distance = Mathf.Abs(distance);
 
-            var followSpeed = _mainCharacter.GetComponent<MainCharacterController>().GetMovementSpeed();
+            var followSpeed = MainCharacterController.Instance.GetMovementSpeed();
             followSpeed = Mathf.Abs(followSpeed);
 
             var followDistance = Mathf.Min(followSpeed * dt, distance);
@@ -69,12 +72,16 @@ public class CameraController : MonoBehaviour
 
     private void CalculateVerticalTargetPosition(float dt, ref Vector3 targetPosition)
     {
-        targetPosition.y = _mainCharacter.transform.position.y + _cameraHeightOffset;
+        var groundDistance = MainCharacterController.Instance.GetGroundDistance();
+        targetPosition.y = MainCharacterController.Instance.transform.position.y + _cameraHeightOffset - (groundDistance * 0.5f);
     }
 
-    private void CalculateDistance(float dt, ref Vector3 targetPosition)
+    private void CalculateTargetSize(float dt, ref Vector3 targetPosition)
     {
-        targetPosition.z = -_cameraDistance;
+        var groundDistance = MainCharacterController.Instance.GetGroundDistance();
+        var groundSizeOffset = groundDistance * _groundDistanceMultiplier;
+
+        _camera.orthographicSize = Mathf.Clamp(_defaultCameraSize + groundSizeOffset, _cameraSizeLimit.x, _cameraSizeLimit.y);
     }
 
     private bool IsCloseToScreenBorder(Vector2 screenPoint, float borderPercentage)
@@ -93,14 +100,5 @@ public class CameraController : MonoBehaviour
         }
 
         return false;
-    }
-
-    private void TickCameraMovement(Vector3 targetPosition, float dt)
-    {
-        var direction = targetPosition - _camera.transform.position;
-        var followSpeed = _mainCharacter.GetComponent<MainCharacterController>().GetMovementSpeed();
-        var followDistance = Mathf.Min(followSpeed * dt, direction.magnitude);
-
-        _camera.transform.position += direction.normalized * followDistance;
     }
 }
