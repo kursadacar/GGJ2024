@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class MainCharacterController : MonoBehaviour
 {
+    #region DEBUG FIELDS
+    [SerializeField]
+    private bool _isGrounded;
+    [SerializeField]
+    private float _raycastHitDistance;
+
+    #endregion
+
     [SerializeField]
     private float _movementSpeed;
 
@@ -20,6 +28,7 @@ public class MainCharacterController : MonoBehaviour
     private Vector3 _lastPosition;
 
     private Rigidbody2D _rigidBody;
+    private CapsuleCollider2D _capsuleCollider;
 
     //[SerializeField]
     //private float _verticalVelocity;
@@ -27,6 +36,7 @@ public class MainCharacterController : MonoBehaviour
     void Start()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
+        _capsuleCollider = GetComponent<CapsuleCollider2D>();
     }
 
     void Update()
@@ -36,6 +46,11 @@ public class MainCharacterController : MonoBehaviour
         HandleInput(verticalVelocity);
 
         _lastPosition = transform.position;
+    }
+
+    public float GetMovementSpeed()
+    {
+        return _movementSpeed;
     }
 
     private void HandleInput(float verticalVelocity)
@@ -57,11 +72,37 @@ public class MainCharacterController : MonoBehaviour
 
         transform.position = position;
 
-        if (IsKeyPressed(_jumpKeys) && verticalVelocity < 0.01f && verticalVelocity > -0.01f)
+        _isGrounded = IsCharacterGrounded();
+        if (IsKeyPressed(_jumpKeys) && _isGrounded)
         {
             //Debug.Log("jump");
             _rigidBody.AddForce(Vector2.up * _jumpForce);
         }
+    }
+
+    private bool IsCharacterGrounded()
+    {
+        var rayOrigin = transform.position + (Vector3.up * _capsuleCollider.size.y * 0.5f * -1f) + Vector3.up * 0.1f;
+
+        var characterLayerMask = LayerMask.GetMask("Character");
+
+        var contactFiler = new ContactFilter2D()
+        {
+            minNormalAngle = 0f,
+            maxNormalAngle = 150f,
+            useNormalAngle = true,
+            layerMask = characterLayerMask,
+            useLayerMask = true,
+        };
+
+        var raycastResult = Physics2D.Raycast(rayOrigin, Vector3.up * -1f, 0.11f, ~characterLayerMask);
+        if (raycastResult)
+        {
+            _raycastHitDistance = Vector2.Distance(raycastResult.point, transform.position);
+            return _raycastHitDistance < (_capsuleCollider.size.y + 0.01f);
+        }
+
+        return false;
     }
 
     private bool IsKeyPressed(KeyCode[] codes)
