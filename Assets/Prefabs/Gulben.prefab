@@ -107,7 +107,7 @@ MonoBehaviour:
   _damage: 20
   _attackDuration: 0.26
   _attackRange: 0.8
-  _damageRange: 1
+  _damageRange: 0.6
   _movementSpeed: 0.8
 --- !u!70 &3863053218024336923
 CapsuleCollider2D:

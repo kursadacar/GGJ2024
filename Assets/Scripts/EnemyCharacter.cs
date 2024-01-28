@@ -13,6 +13,8 @@ public class EnemyCharacter : Character
 
     [SerializeField] private float _movementSpeed;
 
+    private bool _canDamageEnemy;
+
     void Start()
     {
         
@@ -54,6 +56,7 @@ public class EnemyCharacter : Character
     private IEnumerator OnPreAttack()
     {
         _isAttacking = true;
+        _canDamageEnemy = true;
 
         GetComponent<Rigidbody2D>().isKinematic = true;
         GetComponent<Collider2D>().isTrigger = true;
