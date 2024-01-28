@@ -38,9 +38,11 @@ public class CameraController : MonoBehaviour
 
         Vector3 targetPosition = _camera.transform.position;
 
-        CalculateCameraTargetPosition(dt, ref targetPosition);
-        _camera.transform.position = targetPosition;
-        //TickCameraMovement(targetPosition, dt);
+        if(MainCharacter.Instance != null && !MainCharacter.Instance.IsDead)
+        {
+            CalculateCameraTargetPosition(dt, ref targetPosition);
+            _camera.transform.position = targetPosition;
+        }
     }
 
     private void CalculateCameraTargetPosition(float dt, ref Vector3 targetPosition)
@@ -54,14 +56,14 @@ public class CameraController : MonoBehaviour
 
     private void CalculateHorizontalTargetPosition(float dt, ref Vector3 targetPosition)
     {
-        var screenPoint = _camera.WorldToViewportPoint(MainCharacterController.Instance.transform.position);
+        var screenPoint = _camera.WorldToViewportPoint(MainCharacter.Instance.transform.position);
         if (IsCloseToScreenBorder(screenPoint, _borderPercentage))
         {
-            var distance = MainCharacterController.Instance.transform.position.x - _camera.transform.position.x;
+            var distance = MainCharacter.Instance.transform.position.x - _camera.transform.position.x;
             float distanceSign = distance < 0 ? -1f : 1f;
             distance = Mathf.Abs(distance);
 
-            var followSpeed = MainCharacterController.Instance.GetMovementSpeed();
+            var followSpeed = MainCharacter.Instance.GetMovementSpeed();
             followSpeed = Mathf.Abs(followSpeed);
 
             var followDistance = Mathf.Min(followSpeed * dt, distance);
@@ -72,13 +74,13 @@ public class CameraController : MonoBehaviour
 
     private void CalculateVerticalTargetPosition(float dt, ref Vector3 targetPosition)
     {
-        var groundDistance = MainCharacterController.Instance.GetGroundDistance();
-        targetPosition.y = MainCharacterController.Instance.transform.position.y + _cameraHeightOffset - (groundDistance * 0.5f);
+        var groundDistance = MainCharacter.Instance.GetGroundDistance();
+        targetPosition.y = MainCharacter.Instance.transform.position.y + _cameraHeightOffset - (groundDistance * 0.5f);
     }
 
     private void CalculateTargetSize(float dt, ref Vector3 targetPosition)
     {
-        var groundDistance = MainCharacterController.Instance.GetGroundDistance();
+        var groundDistance = MainCharacter.Instance.GetGroundDistance();
         var groundSizeOffset = groundDistance * _groundDistanceMultiplier;
 
         _camera.orthographicSize = Mathf.Clamp(_defaultCameraSize + groundSizeOffset, _cameraSizeLimit.x, _cameraSizeLimit.y);

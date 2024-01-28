@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e765cb2639f1e642af16500765bf738, type: 3}
+  m_Name: MainCharacterSettings
+  m_EditorClassIdentifier: 
+  MovementSpeed: 3.3
+  MaxJumpHeight: 1
+  RockPrefab: {fileID: 7346459508192326913, guid: df8d04006233ec04fb97b35f8b42c7c2, type: 3}
