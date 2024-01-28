@@ -50,7 +50,7 @@ public class CameraController : MonoBehaviour
         targetPosition = _camera.transform.position;
 
         CalculateHorizontalTargetPosition(dt, ref targetPosition);
-        CalculateVerticalTargetPosition(dt, ref targetPosition);
+        //CalculateVerticalTargetPosition(dt, ref targetPosition);
         CalculateTargetSize(dt, ref targetPosition);
     }
 

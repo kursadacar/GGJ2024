@@ -181,7 +181,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 30}
-  m_LocalScale: {x: 9.950806, y: 5.7339716, z: 1}
+  m_LocalScale: {x: 10.566761, y: 6.0889044, z: 1.0619}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1026978267}
@@ -793,7 +793,7 @@ Transform:
   m_GameObject: {fileID: 1026978264}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -19.694359}
+  m_LocalPosition: {x: 0, y: 2.41, z: -19.694359}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1765,7 +1765,7 @@ Transform:
   m_GameObject: {fileID: 3158185169425038419}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.94, y: 4.43, z: 0}
+  m_LocalPosition: {x: -2.73, y: 0.145, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1794,6 +1794,7 @@ MonoBehaviour:
   _deathDuration: 0.6
   _takeDamageDuration: 0.22
   MouthController: {fileID: 0}
+  _groundDistance: 0
   _isGrounded: 0
   _settings: {fileID: 11400000, guid: 7af0c18db22254746949b81fcc67a52b, type: 2}
   _rockSpawnPoint: {fileID: 5614476392812427924}
