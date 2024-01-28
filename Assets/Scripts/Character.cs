@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,10 +17,13 @@ public abstract class Character : MonoBehaviour
 
     private Vector3 _movementVector;
     private float _jumpSpeed;
-    private float _groundDistance;
+    [SerializeField] private float _groundDistance;
 
     private Collider2D _collider;
     private Rigidbody2D _rigidBody;
+
+    [SerializeField]
+    private bool _isGrounded;
 
     protected virtual void Awake()
     {
@@ -33,6 +37,8 @@ public abstract class Character : MonoBehaviour
     {
         _groundDistance = CalculateGroundDistance();
         IsGrounded = GetIsGrounded();
+
+        _isGrounded = IsGrounded;
     }
 
     protected virtual void LateUpdate()
@@ -43,9 +49,9 @@ public abstract class Character : MonoBehaviour
             UpdateMovement();
         }
 
-        if (!IsGrounded)
+        if (IsGrounded)
         {
-            if (_rigidBody != null)
+            if (_rigidBody != null && _rigidBody.velocity.y <= 0.1f && _jumpSpeed > 0f)
             {
                 var velocity = _rigidBody.velocity;
                 velocity.y = +_jumpSpeed;
@@ -113,7 +119,7 @@ public abstract class Character : MonoBehaviour
 
     public bool GetIsGrounded()
     {
-        return _groundDistance < 0.01f;
+        return _groundDistance < 0.1f;
     }
 
     private float CalculateGroundDistance()
@@ -123,15 +129,29 @@ public abstract class Character : MonoBehaviour
             return 0f;
         }
 
-        var rayOrigin = _collider.bounds.min;
+        var rayOrigin = _collider.bounds.min + (Vector3.right * _collider.bounds.size.x) + (Vector3.up * 0.01f);
 
-        var characterLayerMask = LayerMask.GetMask("Character");
-
-        var raycastResult = Physics2D.Raycast(rayOrigin, Vector3.up * -1f, 10000f, ~characterLayerMask);
-        if (raycastResult)
+        var raycastResults = Physics2D.RaycastAll(rayOrigin, Vector3.up * -1f, 100f);
+        if (raycastResults?.Length > 0)
         {
-            _groundDistance = Vector2.Distance(raycastResult.point, transform.position);
-            return _groundDistance;
+            float minDist = float.MaxValue;
+
+            foreach(var res in raycastResults)
+            {
+                if (res.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                Debug.DrawLine(rayOrigin, res.point);
+                var dist = Vector2.Distance(res.point, rayOrigin);
+                if(dist < minDist)
+                {
+                    minDist = dist;
+                }
+            }
+
+            return minDist;
         }
 
         return 0f;

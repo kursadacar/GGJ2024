@@ -57,10 +57,6 @@ public class MainCharacter : Character
     {
         base.LateUpdate();
 
-        if (!IsGrounded)
-        {
-
-        }
     }
 
     public float GetMovementSpeed()
